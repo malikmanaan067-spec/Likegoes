@@ -1,0 +1,218 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ISHFAQ GANIE | SECURE TERMINAL</title>
+    <style>
+        :root {
+            --glow-color: #00ff41;
+            --bg-color: #050505;
+        }
+
+        body, html {
+            margin: 0;
+            padding: 0;
+            width: 100%;
+            height: 100%;
+            background-color: var(--bg-color);
+            color: var(--glow-color);
+            font-family: 'Courier New', Courier, monospace;
+            overflow: hidden;
+        }
+
+        /* Scanline Overlay */
+        body::before {
+            content: " ";
+            display: block;
+            position: absolute;
+            top: 0; left: 0; bottom: 0; right: 0;
+            background: linear-gradient(rgba(18, 16, 16, 0) 50%, rgba(0, 0, 0, 0.25) 50%), 
+                        linear-gradient(90deg, rgba(255, 0, 0, 0.06), rgba(0, 255, 0, 0.02), rgba(0, 0, 255, 0.06));
+            z-index: 100;
+            background-size: 100% 2px, 3px 100%;
+            pointer-events: none;
+        }
+
+        /* Loading Screen */
+        #loading-screen {
+            position: fixed;
+            width: 100%;
+            height: 100%;
+            background: black;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 9999;
+            transition: opacity 1s ease;
+        }
+
+        .terminal-wrapper {
+            width: 90%;
+            max-width: 500px;
+        }
+
+        .auth-text {
+            font-size: 1.2rem;
+            margin-bottom: 10px;
+            min-height: 1.5em;
+        }
+
+        .progress-border {
+            border: 1px solid var(--glow-color);
+            padding: 3px;
+        }
+
+        .progress-fill {
+            height: 15px;
+            background: var(--glow-color);
+            width: 0%;
+            transition: width 0.3s ease;
+            box-shadow: 0 0 10px var(--glow-color);
+        }
+
+        /* Matrix Canvas */
+        #matrix-canvas {
+            position: fixed;
+            top: 0;
+            left: 0;
+            z-index: 1;
+            opacity: 0.3;
+        }
+
+        /* Main Content */
+        #main-site {
+            position: relative;
+            z-index: 10;
+            display: none;
+            height: 100vh;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            opacity: 0;
+            transition: opacity 2s ease;
+        }
+
+        .welcome-title {
+            font-size: 3.5vw;
+            font-weight: bold;
+            text-transform: uppercase;
+            letter-spacing: 8px;
+            text-shadow: 0 0 15px var(--glow-color);
+            animation: glitch 1s infinite;
+        }
+
+        @keyframes glitch {
+            0% { transform: translate(0); }
+            20% { transform: translate(-2px, 2px); }
+            40% { transform: translate(-2px, -2px); }
+            60% { transform: translate(2px, 2px); }
+            80% { transform: translate(2px, -2px); }
+            100% { transform: translate(0); }
+        }
+
+        .sub-text {
+            font-size: 1rem;
+            border-top: 1px solid var(--glow-color);
+            padding-top: 10px;
+            margin-top: 20px;
+        }
+    </style>
+</head>
+<body>
+
+    <canvas id="matrix-canvas"></canvas>
+
+    <div id="loading-screen">
+        <div class="terminal-wrapper">
+            <div class="auth-text" id="status-msg">> INITIALIZING...</div>
+            <div class="progress-border">
+                <div class="progress-fill" id="progress-bar"></div>
+            </div>
+        </div>
+    </div>
+
+    <main id="main-site">
+        <div class="welcome-title">WELCOME TO ISHFAQ GANIE WEB</div>
+        <div class="sub-text">ENCRYPTION LEVEL: AES-256 | ACCESS: GRANTED</div>
+    </main>
+
+    <script>
+        // 1. Matrix Background Logic
+        const canvas = document.getElementById('matrix-canvas');
+        const ctx = canvas.getContext('2d');
+
+        canvas.width = window.innerWidth;
+        canvas.height = window.innerHeight;
+
+        const alphabet = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789$+-*/=%\"'#&_(),.;:?!\\|{}<>[]^~";
+        const fontSize = 16;
+        const columns = canvas.width / fontSize;
+        const rainDrops = Array.from({ length: columns }).fill(1);
+
+        function drawMatrix() {
+            ctx.fillStyle = 'rgba(0, 0, 0, 0.05)';
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+            ctx.fillStyle = '#0F0';
+            ctx.font = fontSize + 'px monospace';
+
+            for (let i = 0; i < rainDrops.length; i++) {
+                const text = alphabet.charAt(Math.floor(Math.random() * alphabet.length));
+                ctx.fillText(text, i * fontSize, rainDrops[i] * fontSize);
+                if (rainDrops[i] * fontSize > canvas.height && Math.random() > 0.975) {
+                    rainDrops[i] = 0;
+                }
+                rainDrops[i]++;
+            }
+        }
+
+        // 2. Authentication Loading Sequence
+        const messages = [
+            "> COUPLING_SYSTEM_CORES...",
+            "> LOADING_VIRTUAL_ENV...",
+            "> BYPASSING_SECURITY_WALLS...",
+            "> AUTHENTICATING_ISHFAQ_GANIE...",
+            "> DECRYPTING_DATABASE...",
+            "> ACCESS_GRANTED"
+        ];
+
+        let msgIndex = 0;
+        const statusMsg = document.getElementById('status-msg');
+        const progressBar = document.getElementById('progress-bar');
+
+        function runAuth() {
+            if (msgIndex < messages.length) {
+                statusMsg.innerText = messages[msgIndex];
+                let progress = ((msgIndex + 1) / messages.length) * 100;
+                progressBar.style.width = progress + "%";
+                msgIndex++;
+                setTimeout(runAuth, 600);
+            } else {
+                setTimeout(completeEntry, 800);
+            }
+        }
+
+        function completeEntry() {
+            document.getElementById('loading-screen').style.opacity = '0';
+            setTimeout(() => {
+                document.getElementById('loading-screen').style.display = 'none';
+                const mainSite = document.getElementById('main-site');
+                mainSite.style.display = 'flex';
+                setTimeout(() => mainSite.style.opacity = '1', 100);
+            }, 1000);
+        }
+
+        // Start everything
+        window.onload = () => {
+            setInterval(drawMatrix, 30);
+            runAuth();
+        };
+
+        // Resize handler
+        window.addEventListener('resize', () => {
+            canvas.width = window.innerWidth;
+            canvas.height = window.innerHeight;
+        });
+    </script>
+</body>
+</html>
